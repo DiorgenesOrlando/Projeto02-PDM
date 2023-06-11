@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -15,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 
 @Composable
-fun InsertEditContactScreen(
+fun DetailContactScreen(
     navController: NavController,
     contactsViewModel: ContactsViewModel
 ){
@@ -23,7 +24,7 @@ fun InsertEditContactScreen(
         contactsViewModel.onBackPressed(navController)
         
     }
-    val uiState by contactsViewModel.insertEditScreenUiState.collectAsState()
+    val uiState by contactsViewModel.detailScreenUiState.collectAsState()
     InsertEditForm(
         name = uiState.name,
         surname = uiState.surname,
@@ -33,6 +34,7 @@ fun InsertEditContactScreen(
         onSurnameChange = {contactsViewModel.onContactSurnameChange(it)},
         onNumberChange = {contactsViewModel.onContactNumberChange(it)},
         onEmailChange = {contactsViewModel.onContactEmailChange(it)},
+
     )
 }
 
@@ -59,25 +61,34 @@ fun InsertEditForm(
         Column(horizontalAlignment = Alignment.Start) {
             OutlinedTextField(
                 label = { Text(text = "Name") },
-                value = name, onValueChange = onNameChange
+                value = name, onValueChange = onNameChange,
+                readOnly = true
             )
 
             Column(horizontalAlignment = Alignment.Start) {
                 OutlinedTextField(
                     label = { Text(text = "Surname") },
-                    value = surname, onValueChange =  onSurnameChange
+                    value = surname,onValueChange = onSurnameChange,
+                    readOnly = true
                 )
+            }
 
-                Column(horizontalAlignment = Alignment.Start) {
+
+            Column(horizontalAlignment = Alignment.Start) {
                     OutlinedTextField(
                         label = { Text(text = "Number") },
-                        value = number, onValueChange = onNumberChange
+                        value = number,
+                        onValueChange = onNumberChange,
+                        readOnly = true // torna o campo não editável
                     )
 
-                    Column(horizontalAlignment = Alignment.Start) {
+
+
+                Column(horizontalAlignment = Alignment.Start) {
                         OutlinedTextField(
                             label = { Text(text = "Email") },
-                            value = email, onValueChange = onEmailChange
+                            value = email, onValueChange = onEmailChange,
+                            readOnly = true
                         )
                     }
                 }
@@ -90,4 +101,3 @@ fun InsertEditForm(
 
 
     }
-}

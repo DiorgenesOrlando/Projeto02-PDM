@@ -13,10 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.contacts.R
 import com.example.contacts.models.Contact
 import com.example.contacts.viewmodels.ContactsViewModel
 
@@ -28,6 +30,16 @@ fun ContactScreen(
 
     val uiState by contactsViewModel.contactScreenUiState.collectAsState()
 
+    val contatos = uiState.allContacts
+    val status = uiState.status
+
+
+    if (contatos.isEmpty() && status.equals("erro")) {
+        ErrorScreen();
+    }else  if(contatos.isEmpty()  && status.equals("carregando")){
+        LoadingScreen();
+    }
+
     if (!uiState.onlyFavorites) {
 
 
@@ -37,12 +49,12 @@ fun ContactScreen(
         contacts = uiState.allContacts,
 
 
-        onFavoriteChange = { contact, isFavorite ->
-            contactsViewModel.onContactIsFavoriteChange(contact, isFavorite)
-        },
-        onEditContact = { contactsViewModel.editContact(it, navController) },
-        onDeleteContact = { contactsViewModel.onDeleteContact(it) }
-    )
+      //  onFavoriteChange = { contact, isFavorite ->
+      //      contactsViewModel.onContactIsFavoriteChange(contact, isFavorite)
+       // },
+        onEditContact = { contactsViewModel.editContact(it, navController) })
+    //    onDeleteContact = { contactsViewModel.onDeleteContact(it) }
+    //)
 }else{
         var contacts: ArrayList<Contact> = ArrayList()
         uiState.allContacts.forEach {
@@ -59,11 +71,11 @@ fun ContactScreen(
             contacts = contacts,
 
 
-            onFavoriteChange = { contact, isFavorite ->
-                contactsViewModel.onContactIsFavoriteChange(contact, isFavorite)
-            },
+            //onFavoriteChange = { contact, isFavorite ->
+             //   contactsViewModel.onContactIsFavoriteChange(contact, isFavorite)
+            //},
             onEditContact = { contactsViewModel.editContact(it, navController) },
-            onDeleteContact = { contactsViewModel.onDeleteContact(it) }
+           // onDeleteContact = { contactsViewModel.onDeleteContact(it) }
         )
 
 }
@@ -72,25 +84,42 @@ fun ContactScreen(
 @Composable
 fun contactList(
     contacts: List<Contact>,
-    onFavoriteChange: (Contact, Boolean) -> Unit,
-    onEditContact: (Contact) -> Unit,
-    onDeleteContact: (Contact) -> Unit
+    //onFavoriteChange: (Contact, Boolean) -> Unit,
+    onEditContact: (Contact) -> Unit
+    //onDeleteContact: (Contact) -> Unit
 
 ) {
     LazyColumn(){
         items(contacts) { contact->
-            ContactEntry(contact = contact, onFavoriteChange = {onFavoriteChange(contact, it)}, onEditContact = {onEditContact(contact)}, onDeleteContact = {onDeleteContact(contact)})
+            ContactEntry(contact = contact,/* onFavoriteChange = {onFavoriteChange(contact, it)}*/ onEditContact = {onEditContact(contact)}/*, onDeleteContact = {onDeleteContact(contact)}*/)
         }
     }
 }
 
+@Composable
+fun ErrorScreen(modifier: Modifier = Modifier) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()){
+
+        Text(text = stringResource(id = R.string.loading_failed))
+    }
+
+}
+
+@Composable
+fun LoadingScreen(modifier: Modifier = Modifier) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()){
+
+        Text(text = stringResource(id = R.string.loading))
+    }
+
+}
 
 @Composable
 fun ContactEntry(
     contact: Contact,
-    onFavoriteChange: (Boolean) -> Unit,
+    //onFavoriteChange: (Boolean) -> Unit,
     onEditContact: () -> Unit,
-    onDeleteContact: () -> Unit,
+    //onDeleteContact: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -112,7 +141,7 @@ fun ContactEntry(
                 modifier = Modifier.weight(1f)
                     .padding(start = 16.dp)
             )
-
+/*
             IconToggleButton(
                 checked = contact.isFavorite,
                 onCheckedChange = { onFavoriteChange(!contact.isFavorite) }
@@ -130,6 +159,7 @@ fun ContactEntry(
                 }
             }
 
+
             IconToggleButton(
                 checked = false,
                 onCheckedChange = { onDeleteContact() }
@@ -139,6 +169,7 @@ fun ContactEntry(
                     contentDescription = "Delete Contact"
                 )
             }
+            */
         }
     }
 }

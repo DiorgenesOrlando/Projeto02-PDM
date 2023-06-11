@@ -1,6 +1,6 @@
 package com.example.contacts.viewmodels
 
-data class InsertEditScreenUiState(
+data class DetailScreenUiState(
     val name: String = "",
     val surname : String = "",
     val number: String = "",

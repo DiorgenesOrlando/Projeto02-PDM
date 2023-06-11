@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Contacts</string>
+    <string name="loading">Carregando</string>
+    <string name="loading_failed">Falha ao carregar</string>
 </resources>

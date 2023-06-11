@@ -1,12 +1,14 @@
 package com.example.contacts.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.contacts.R
 import com.example.contacts.models.Contact
-import com.example.contacts.viewmodels.InsertEditScreenUiState
-import com.example.contacts.viewmodels.MainScreenUiState
+import com.example.contacts.network.ContactApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import java.io.IOException
 
 class ContactsViewModel: ViewModel() {
 
@@ -18,39 +20,43 @@ class ContactsViewModel: ViewModel() {
     private var _contactScreenUiState: MutableStateFlow<ContactScreenUiState> = MutableStateFlow(
         ContactScreenUiState()
     )
-    val contactScreenUiState: StateFlow<ContactScreenUiState> = _contactScreenUiState.asStateFlow()
+    public  val contactScreenUiState: StateFlow<ContactScreenUiState> = _contactScreenUiState.asStateFlow()
 
-    private var _insertEditContactScreenUiState: MutableStateFlow<InsertEditScreenUiState> =
+    private var _detailContactScreenUiState: MutableStateFlow<DetailScreenUiState> =
         MutableStateFlow(
-            InsertEditScreenUiState()
+            DetailScreenUiState()
         )
-    val insertEditScreenUiState: StateFlow<InsertEditScreenUiState> =
-        _insertEditContactScreenUiState.asStateFlow()
+    val detailScreenUiState: StateFlow<DetailScreenUiState> =
+        _detailContactScreenUiState.asStateFlow()
 
    // var editContact: Boolean = false
-    var contactToEdit: Contact = Contact("")
+    var contactToEdit: Contact = Contact()
 
+
+    init {
+        getContacts()
+    }
 
     fun onContactNameChange(newContactName: String) {
-        _insertEditContactScreenUiState.update { currentState ->
+        _detailContactScreenUiState.update { currentState ->
             currentState.copy(name = newContactName)
         }
     }
 
     fun onContactSurnameChange(newContactSurname: String) {
-        _insertEditContactScreenUiState.update { currentState ->
+        _detailContactScreenUiState.update { currentState ->
             currentState.copy(surname = newContactSurname)
         }
     }
 
     fun onContactNumberChange(newContactNumber: String) {
-        _insertEditContactScreenUiState.update { currentState ->
+        _detailContactScreenUiState.update { currentState ->
             currentState.copy(number = newContactNumber)
         }
     }
 
     fun onContactEmailChange(newContactEmail: String) {
-        _insertEditContactScreenUiState.update { currentState ->
+        _detailContactScreenUiState.update { currentState ->
             currentState.copy(email = newContactEmail)
         }
     }
@@ -90,20 +96,13 @@ class ContactsViewModel: ViewModel() {
             if (_mainScreenUiState.value.editContact) {
                 _mainScreenUiState.update { currentState ->
                     currentState.copy(
-                        screenTitle = "ATUALIZAR CONTATO",
+                        screenTitle = "DETALHES",
                         fabIcon = R.drawable.baseline_check_24,
                        // segIcon = -1//ColorDrawable(Color.TRANSPARENT)
                     )
                 }
-            } else {
-                _mainScreenUiState.update { currentState ->
-                    currentState.copy(
-                        screenTitle = "INSERIR CONTATO",
-                        fabIcon = R.drawable.baseline_check_24,
-                    )
-                }
             }
-            navController.navigate("insert_edit_contact")
+            navController.navigate("detail_contact")
         } else {
             _mainScreenUiState.update { currentState ->
                 currentState.copy(
@@ -124,10 +123,10 @@ class ContactsViewModel: ViewModel() {
                 allContactsTemp.removeAt(pos)
                 allContactsTemp.add(
                     pos, contactToEdit.copy(
-                        name = _insertEditContactScreenUiState.value.name,
-                        surname = _insertEditContactScreenUiState.value.surname,
-                        number = _insertEditContactScreenUiState.value.number,
-                        email = _insertEditContactScreenUiState.value.email,
+                        name = _detailContactScreenUiState.value.name,
+                        surname = _detailContactScreenUiState.value.surname,
+                        number = _detailContactScreenUiState.value.number,
+                        email = _detailContactScreenUiState.value.email,
                     )
                 )
                 _contactScreenUiState.update { currentState ->
@@ -138,19 +137,19 @@ class ContactsViewModel: ViewModel() {
                 _contactScreenUiState.update { currentState ->
                     currentState.copy(
                         allContacts = currentState.allContacts + Contact(
-                            name = _insertEditContactScreenUiState.value.name,
-                            surname = _insertEditContactScreenUiState.value.surname,
-                            number = _insertEditContactScreenUiState.value.number,
-                            email = _insertEditContactScreenUiState.value.email,
+                            name = _detailContactScreenUiState.value.name,
+                            surname = _detailContactScreenUiState.value.surname,
+                            number = _detailContactScreenUiState.value.number,
+                            email = _detailContactScreenUiState.value.email,
                         )
                     )
 
                 }
             }
-            _insertEditContactScreenUiState.update {
-                InsertEditScreenUiState()
+            _detailContactScreenUiState.update {
+                DetailScreenUiState()
             }
-            contactToEdit = Contact("")
+            contactToEdit = Contact()
             navController.navigate("contact_list") {
                 popUpTo("contact_list") {
                     inclusive = true
@@ -162,7 +161,7 @@ class ContactsViewModel: ViewModel() {
     fun editContact(contact: Contact, navController: NavController) {
         _mainScreenUiState.value.editContact = true
     contactToEdit = contact
-    _insertEditContactScreenUiState.update { currentState ->
+        _detailContactScreenUiState.update { currentState ->
         currentState.copy(
             name = contact.name,
             surname = contact.surname,
@@ -175,7 +174,7 @@ class ContactsViewModel: ViewModel() {
     }
 
     fun clearForm(){
-        _insertEditContactScreenUiState.update {
+        _detailContactScreenUiState.update {
                 currentState->
             currentState.copy(
                 name = "",
@@ -201,6 +200,36 @@ class ContactsViewModel: ViewModel() {
 
         navController.navigate("contact_list")
 
+    }
+    fun getContacts() {
+        viewModelScope.launch{
+            try{
+
+                _contactScreenUiState.update {currentState->
+                    currentState.copy(
+                        status = "carregando"
+                    )
+                }
+                val listResult =  ContactApi.retrofitService.getContacts()
+                _contactScreenUiState.update { currentState ->
+                    currentState.copy(
+                        allContacts = listResult,
+                        status = "ok"
+
+                    )
+
+                }
+
+            }catch(e : IOException){
+                _contactScreenUiState.update {currentState->
+                    currentState.copy(
+                        status = "erro"
+                    )
+                }
+
+            }
+
+        }
     }
 
 }
